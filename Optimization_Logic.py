@@ -2,10 +2,9 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from flask import Flask, request, jsonify
 from datetime import datetime, timedelta
-
-app = Flask(__name__)
+import argparse
+import json
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
@@ -52,11 +51,9 @@ def optimize_portfolio(covariance_matrix, num_stocks):
                       method='SLSQP', bounds=bounds, constraints=constraints)
     return result.x
 
-@app.route('/', methods=['POST'])
-def main():
-    request_json = request.get_json()
-    num_stocks = request_json.get('numStocks')
-    stock_symbols = request_json.get('stockSymbols')
+def main(args):
+    num_stocks = args.num_stocks
+    stock_symbols = args.stock_symbols
     
     end_date = datetime.today().strftime('%Y-%m-%d')
     start_date = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
@@ -98,11 +95,19 @@ def main():
     # Optimize weights
     optimized_weights = optimize_portfolio(covariance_matrix, num_stocks)
     
-    return jsonify({
-        'output1': optimized_weights.tolist(),
-        'output2': expected_portfolio_return,
-        'output3': annual_portfolio_variance
-    })
+    # Output results
+    results = {
+        'optimized_weights': optimized_weights.tolist(),
+        'expected_portfolio_return': expected_portfolio_return,
+        'annual_portfolio_variance': annual_portfolio_variance
+    }
+
+    print(json.dumps(results, indent=4))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    parser = argparse.ArgumentParser(description='Stock Optimization Script')
+    parser.add_argument('--num_stocks', type=int, required=True, help='Number of stocks')
+    parser.add_argument('--stock_symbols', type=str, nargs='+', required=True, help='List of stock symbols')
+    
+    args = parser.parse_args()
+    main(args)
