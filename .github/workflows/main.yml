@@ -34,12 +34,8 @@ jobs:
       run: |
         python Optimization_Logic.py ${{ github.event.inputs.num_stocks }} "${{ github.event.inputs.stock_symbols }}"
 
-    - name: Save results
-      run: |
-        echo "Results: ${{ github.event.inputs.num_stocks }}, ${{ github.event.inputs.stock_symbols }}" > results.txt
-
     - name: Upload result file
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
-        name: results
+        name: optimization-results
         path: results.txt
