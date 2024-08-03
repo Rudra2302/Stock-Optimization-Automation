@@ -1,8 +1,8 @@
+import sys
 import yfinance as yf
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-import sys
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
@@ -49,54 +49,30 @@ def optimize_portfolio(covariance_matrix, num_stocks):
                       method='SLSQP', bounds=bounds, constraints=constraints)
     return result.x
 
-def main(num_stocks, stock_symbols):
-    end_date = datetime.today().strftime('%Y-%m-%d')
-    start_date = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
-    
-    # Fetch stock data
-    stock_data = fetch_stock_data(stock_symbols, start_date, end_date)
-    
-    # Calculate daily returns
-    daily_returns = calculate_daily_returns(stock_data)
-    
-    # Calculate statistics
-    mean_returns, std_devs, covariance_matrix, correlation_matrix = calculate_statistics(daily_returns)
-    
-    # Create weight array
-    weights = np.array([1.0 / num_stocks] * num_stocks)
-    
-    # Create weights by SDs
-    weights_sds = weights * std_devs
-    
-    # Calculate M1 and M2
-    m1 = np.dot(weights_sds, correlation_matrix)
-    m2 = np.dot(m1, weights_sds.T)
-    
-    # Portfolio Variance
-    portfolio_variance_value = np.sqrt(m2)
-    
-    # Expected yearly returns
-    expected_yearly_returns = mean_returns * 252
-    
-    # EYR by weight
-    eyr_by_weight = weights * expected_yearly_returns
-    
-    # Expected Portfolio Return
-    expected_portfolio_return = np.sum(eyr_by_weight)
-    
-    # Annual Portfolio Variance
-    annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
-    
-    # Optimize weights
-    optimized_weights = optimize_portfolio(covariance_matrix, num_stocks)
-    
-    # Save results to file
-    with open('results.txt', 'w') as f:
-        f.write(f'Optimized Weights: {optimized_weights.tolist()}\n')
-        f.write(f'Expected Portfolio Return: {expected_portfolio_return}\n')
-        f.write(f'Annual Portfolio Variance: {annual_portfolio_variance}\n')
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     num_stocks = int(sys.argv[1])
     stock_symbols = sys.argv[2].split(',')
-    main(num_stocks, stock_symbols)
+
+    end_date = datetime.today().strftime('%Y-%m-%d')
+    start_date = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
+
+    stock_data = fetch_stock_data(stock_symbols, start_date, end_date)
+    daily_returns = calculate_daily_returns(stock_data)
+    mean_returns, std_devs, covariance_matrix, correlation_matrix = calculate_statistics(daily_returns)
+
+    weights = np.array([1.0 / num_stocks] * num_stocks)
+    weights_sds = weights * std_devs
+    m1 = np.dot(weights_sds, correlation_matrix)
+    m2 = np.dot(m1, weights_sds.T)
+    portfolio_variance_value = np.sqrt(m2)
+    expected_yearly_returns = mean_returns * 252
+    eyr_by_weight = weights * expected_yearly_returns
+    expected_portfolio_return = np.sum(eyr_by_weight)
+    annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
+
+    optimized_weights = optimize_portfolio(covariance_matrix, num_stocks)
+
+    with open("results.txt", "w") as f:
+        f.write(f"Optimized Weights: {optimized_weights.tolist()}\n")
+        f.write(f"Expected Portfolio Return: {expected_portfolio_return}\n")
+        f.write(f"Annual Portfolio Variance: {annual_portfolio_variance}\n")
