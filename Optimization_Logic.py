@@ -2,9 +2,7 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from datetime import datetime, timedelta
-import argparse
-import json
+import sys
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
@@ -51,10 +49,7 @@ def optimize_portfolio(covariance_matrix, num_stocks):
                       method='SLSQP', bounds=bounds, constraints=constraints)
     return result.x
 
-def main(args):
-    num_stocks = args.num_stocks
-    stock_symbols = args.stock_symbols
-    
+def main(num_stocks, stock_symbols):
     end_date = datetime.today().strftime('%Y-%m-%d')
     start_date = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
     
@@ -95,19 +90,13 @@ def main(args):
     # Optimize weights
     optimized_weights = optimize_portfolio(covariance_matrix, num_stocks)
     
-    # Output results
-    results = {
-        'optimized_weights': optimized_weights.tolist(),
-        'expected_portfolio_return': expected_portfolio_return,
-        'annual_portfolio_variance': annual_portfolio_variance
-    }
-
-    print(json.dumps(results, indent=4))
+    # Save results to file
+    with open('results.txt', 'w') as f:
+        f.write(f'Optimized Weights: {optimized_weights.tolist()}\n')
+        f.write(f'Expected Portfolio Return: {expected_portfolio_return}\n')
+        f.write(f'Annual Portfolio Variance: {annual_portfolio_variance}\n')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Stock Optimization Script')
-    parser.add_argument('--num_stocks', type=int, required=True, help='Number of stocks')
-    parser.add_argument('--stock_symbols', type=str, nargs='+', required=True, help='List of stock symbols')
-    
-    args = parser.parse_args()
-    main(args)
+    num_stocks = int(sys.argv[1])
+    stock_symbols = sys.argv[2].split(',')
+    main(num_stocks, stock_symbols)
