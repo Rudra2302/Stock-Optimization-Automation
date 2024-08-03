@@ -2,4 +2,3 @@ yfinance
 numpy
 pandas
 scipy
-flask
