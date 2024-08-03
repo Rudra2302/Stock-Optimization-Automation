@@ -1,0 +1,40 @@
+name: Stock Optimization
+
+on:
+  workflow_dispatch:
+    inputs:
+      num_stocks:
+        description: 'Number of stocks'
+        required: true
+        type: number
+      stock_symbols:
+        description: 'Stock symbols (comma separated)'
+        required: true
+        type: string
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run optimization script
+      run: |
+        python Optimization_Logic.py ${{ github.event.inputs.num_stocks }} "${{ github.event.inputs.stock_symbols }}"
+
+    - name: Upload result file
+      run: |
+        echo "Results: ${{ github.event.inputs.num_stocks }}, ${{ github.event.inputs.stock_symbols }}" > results.txt
+      # This step should contain your script to generate results and save them to results.txt
