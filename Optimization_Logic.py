@@ -3,6 +3,8 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
+import datetime
+from datetime import datetime, timedelta
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
