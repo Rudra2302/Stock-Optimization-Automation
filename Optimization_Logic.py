@@ -5,6 +5,7 @@ import pandas as pd
 from scipy.optimize import minimize
 import datetime
 from datetime import datetime, timedelta
+import json  # Import json module for output
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
@@ -24,17 +25,11 @@ def calculate_statistics(daily_returns):
     mean_returns = returns_df.mean()
     std_devs = returns_df.std()
     
-    # Excess returns matrix
     excess_return_matrix = returns_df - returns_df.mean()
-    
-    # Product of standard deviations
     product_of_sds = np.outer(std_devs, std_devs)
     
-    # Variance-Covariance Matrix
     n = len(returns_df)
     covariance_matrix = np.dot(excess_return_matrix.T, excess_return_matrix) / n
-    
-    # Correlation Matrix
     correlation_matrix = covariance_matrix / product_of_sds
     np.fill_diagonal(correlation_matrix, 1)
     
@@ -74,7 +69,11 @@ if __name__ == "__main__":
 
     optimized_weights = optimize_portfolio(covariance_matrix, num_stocks)
 
+    results = {
+        'optimized_weights': optimized_weights.tolist(),
+        'expected_portfolio_return': expected_portfolio_return,
+        'annual_portfolio_variance': annual_portfolio_variance
+    }
+
     with open("results.txt", "w") as f:
-        f.write(f"Optimized Weights: {optimized_weights.tolist()}\n")
-        f.write(f"Expected Portfolio Return: {expected_portfolio_return}\n")
-        f.write(f"Annual Portfolio Variance: {annual_portfolio_variance}\n")
+        f.write(json.dumps(results, indent=4))
