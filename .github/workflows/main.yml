@@ -18,10 +18,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3  # Updated to v3
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v4  # Updated to v4
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
@@ -35,11 +35,6 @@ jobs:
         python Optimization_Logic.py ${{ github.event.inputs.num_stocks }} "${{ github.event.inputs.stock_symbols }}"
 
     - name: Upload result file
-      run: |
-        echo "Results: ${{ github.event.inputs.num_stocks }}, ${{ github.event.inputs.stock_symbols }}" > results.txt
-      # This step should contain your script to generate results and save them to results.txt
-
-    - name: Upload results to GitHub artifacts
       uses: actions/upload-artifact@v3
       with:
         name: results
