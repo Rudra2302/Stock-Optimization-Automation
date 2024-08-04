@@ -5,7 +5,10 @@ import pandas as pd
 from scipy.optimize import minimize
 import datetime
 from datetime import datetime, timedelta
-import json  # Import json module for output
+import json
+import os
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
@@ -46,6 +49,24 @@ def optimize_portfolio(covariance_matrix, num_stocks):
                       method='SLSQP', bounds=bounds, constraints=constraints)
     return result.x
 
+def update_google_sheet(results, num_stocks):
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict({
+        "type": "service_account",
+        "client_email": os.environ.get('GOOGLE_CLIENT_EMAIL'),
+        "private_key": os.environ.get('GOOGLE_PRIVATE_KEY').replace('\\n', '\n')
+    }, scope)
+
+    client = gspread.authorize(credentials)
+    sheet = client.open("Portfolio Optimization").sheet1  # Change this to your Google Sheet name
+
+    # Update the weights in column C, based on the number of stocks
+    for i in range(num_stocks):
+        sheet.update_cell(i + 2, 3, results['optimized_weights'][i])  # Update weights in column C
+
+    sheet.update_cell(2, 4, results['expected_portfolio_return'])  # Update expected return in D2
+    sheet.update_cell(2, 5, results['annual_portfolio_variance'])  # Update variance in E2
+
 if __name__ == "__main__":
     num_stocks = int(sys.argv[1])
     stock_symbols = sys.argv[2].split(',')
@@ -77,3 +98,5 @@ if __name__ == "__main__":
 
     with open("results.txt", "w") as f:
         f.write(json.dumps(results, indent=4))
+    
+    update_google_sheet(results, num_stocks)
