@@ -1,4 +1,5 @@
-yfinance
+nsetools
 numpy
 pandas
 scipy
+json
