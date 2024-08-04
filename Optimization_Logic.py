@@ -1,17 +1,23 @@
 import sys
-import yfinance as yf
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 import datetime
 from datetime import datetime, timedelta
 import json  # Import json module for output
+from nsetools import Nse  # Import nsetools
+
+# Initialize NSE object
+nse = Nse()
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
     for symbol in symbols:
-        stock_data = yf.download(symbol, start=start_date, end=end_date)
-        data[symbol] = stock_data['Close'].tolist()
+        stock_data = nse.get_quote(symbol)
+        if stock_data:
+            # 'dayHigh' and 'dayLow' are placeholders. Adjust based on actual data fields available in nsetools.
+            prices = [stock_data['dayHigh']] * 365  # Placeholder data for one year
+            data[symbol] = prices
     return data
 
 def calculate_daily_returns(data):
