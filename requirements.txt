@@ -1,5 +1,4 @@
 nsetools
 numpy
 pandas
-scipy
-json
+scipy==1.14.0
