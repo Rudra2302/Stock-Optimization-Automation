@@ -33,9 +33,6 @@ jobs:
     - name: Run optimization script
       run: |
         python Optimization_Logic.py ${{ github.event.inputs.num_stocks }} "${{ github.event.inputs.stock_symbols }}"
-      env:
-        GOOGLE_CLIENT_EMAIL: ${{ secrets.GOOGLE_CLIENT_EMAIL }}
-        GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
 
     - name: Upload result file
       uses: actions/upload-artifact@v3
