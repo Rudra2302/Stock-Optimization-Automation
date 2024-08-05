@@ -75,5 +75,5 @@ if __name__ == "__main__":
         'annual_portfolio_variance': annual_portfolio_variance
     }
 
-    with open("results.json", "w") as f:
+    with open("results.txt", "w") as f:
         f.write(json.dumps(results, indent=4))
