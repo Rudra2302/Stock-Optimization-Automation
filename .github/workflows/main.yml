@@ -1,4 +1,4 @@
-name: Stock Optimization
+name: Run Optimization
 
 on:
   workflow_dispatch:
@@ -6,24 +6,24 @@ on:
       num_stocks:
         description: 'Number of stocks'
         required: true
-        type: number
+        type: integer
       stock_symbols:
-        description: 'Stock symbols (comma separated)'
+        description: 'Comma-separated stock symbols'
         required: true
         type: string
 
 jobs:
-  optimize:
+  run-optimization:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
@@ -34,7 +34,7 @@ jobs:
       run: |
         python Optimization_Logic.py ${{ github.event.inputs.num_stocks }} "${{ github.event.inputs.stock_symbols }}"
 
-    - name: Upload result file
+    - name: Upload results artifact
       uses: actions/upload-artifact@v3
       with:
         name: results
