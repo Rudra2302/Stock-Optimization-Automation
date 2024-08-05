@@ -71,8 +71,8 @@ if __name__ == "__main__":
 
     results = {
         'optimized_weights': optimized_weights.tolist(),
-        'expected_portfolio_return': expected_portfolio_return,
-        'annual_portfolio_variance': annual_portfolio_variance
+        'expected_portfolio_return': expected_portfolio_return/100,
+        'annual_portfolio_variance': annual_portfolio_variance/100
     }
 
     with open("results.txt", "w") as f:
