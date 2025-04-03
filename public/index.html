@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Optimizer</title>
+</head>
+<body>
+    <h1>Stock Portfolio Optimizer</h1>
+    <form id="optimizeForm">
+        <div id="stockInputs">
+            <div class="stock-input">
+                <input type="text" name="stock" required>
+                <button type="button" class="removeStock">-</button>
+            </div>
+        </div>
+        <button type="button" id="addStock">Add Stock</button>
+        <button type="submit">Optimize</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        let stockCount = 1;
+    
+        document.getElementById('addStock').addEventListener('click', () => {
+            if (stockCount >= 10) return;
+            
+            const newInput = document.createElement('div');
+            newInput.className = 'stock-input';
+            newInput.innerHTML = `
+                <input type="text" name="stock" required>
+                <button type="button" class="removeStock">-</button>
+            `;
+            document.getElementById('stockInputs').appendChild(newInput);
+            stockCount++;
+        });
+
+        document.getElementById('stockInputs').addEventListener('click', (e) => {
+            if (e.target.classList.contains('removeStock')) {
+                if (stockCount > 1) {
+                    e.target.parentElement.remove();
+                    stockCount--;
+                }
+            }
+        });
+
+        document.getElementById('optimizeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
+                            .map(input => input.value.trim())
+                            .filter(Boolean);
+
+            try {
+                const response = await fetch('/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ stocks })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('result').innerHTML = 
+                        `Error: ${data.error}`;
+                    return;
+                }
+
+                let resultHTML = `<h2>Optimization Results:</h2>`;
+                resultHTML += `<p>Expected Return: ${data.return * 100}%</p>`;
+                resultHTML += `<p>Risk: ${data.risk * 100}%</p>`;
+                resultHTML += `<h3>Optimal Ratios:</h3>`;
+                
+                for (const [stock, ratio] of Object.entries(data.ratios)) {
+                    resultHTML += `<p>${stock}: ${(ratio * 100).toFixed(1)}%</p>`;
+                }
+                
+                document.getElementById('result').innerHTML = resultHTML;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
