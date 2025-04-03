@@ -11,13 +11,16 @@ def fetch_stock_data(symbols, start_date, end_date):
     data = {}
     for symbol in symbols:
         stock_data = yf.download(symbol, start=start_date, end=end_date)
-        data[symbol] = stock_data['Close'].tolist()
+        if 'Close' in stock_data.columns:
+            data[symbol] = stock_data['Close'].dropna().values.tolist()
+        else:
+            data[symbol] = []
     return data
 
 def calculate_daily_returns(data):
     returns = {}
     for symbol, prices in data.items():
-        returns[symbol] = [((prices[i] / prices[i - 1]) - 1) * 100 for i in range(1, len(prices))]
+        returns[symbol] = [((prices[i][0] / prices[i - 1][0]) - 1) * 100 for i in range(1, len(prices))]
     return returns
 
 def calculate_statistics(daily_returns):
@@ -68,6 +71,15 @@ if __name__ == "__main__":
     annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
 
     optimized_weights = optimize_portfolio(covariance_matrix, num_stocks)
+
+    # weights_sds = optimized_weights * std_devs
+    # m1 = np.dot(weights_sds, correlation_matrix)
+    # m2 = np.dot(m1, weights_sds.T)
+    # portfolio_variance_value = np.sqrt(m2)
+    # expected_yearly_returns = mean_returns * 252
+    # eyr_by_weight = optimized_weights * expected_yearly_returns
+    # expected_portfolio_return = np.sum(eyr_by_weight)
+    # annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
 
     results = {
         'optimized_weights': optimized_weights.tolist(),

@@ -1,0 +1,9 @@
+{
+    "optimized_weights": [
+        0.34860495468788033,
+        0.12626973333910502,
+        0.5251253119730147
+    ],
+    "expected_portfolio_return": 0.08335957911591434,
+    "annual_portfolio_variance": 0.19453309926877785
+}
