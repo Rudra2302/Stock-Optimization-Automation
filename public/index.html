@@ -8,33 +8,58 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background: url('2a7e54add6b3524b650a6ba4f7fb01e1.jpg') no-repeat center center/cover;
+            margin: 0;
+            padding: 0;
             color: #fff;
-            text-align: center;
-            padding: 20px;
+            background: url('2a7e54add6b3524b650a6ba4f7fb01e1.jpg') no-repeat center center/cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
         .container {
-            max-width: 500px;
-            margin: auto;
+            width: 90%;
+            max-width: 600px;
             background: rgba(30, 30, 30, 0.85);
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(10px);
+            text-align: left;
         }
         h1 {
             font-weight: 600;
             letter-spacing: 1px;
+            text-align: center;
         }
         input[type="text"] {
-            width: 70%;
+            width: calc(100% - 50px);
             padding: 12px;
-            margin: 5px;
+            margin: 5px 0;
             border: none;
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.2);
             color: #fff;
             font-size: 16px;
+            display: inline-block;
+        }
+        .stock-input {
+            display: flex;
+            align-items: center;
+        }
+        .removeStock {
+            background: #d63031;
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .removeStock:hover {
+            background: #b22222;
         }
         button {
             background: #00b894;
@@ -44,18 +69,13 @@
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
-            margin: 5px;
+            margin-top: 10px;
+            width: 100%;
             transition: all 0.3s ease;
         }
         button:hover {
             background: #019374;
             transform: scale(1.08);
-        }
-        .removeStock {
-            background: #d63031;
-        }
-        .removeStock:hover {
-            background: #b22222;
         }
         #result {
             margin-top: 20px;
@@ -66,6 +86,9 @@
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
+            width: 100%;
+            max-width: none;
+            text-align: center;
         }
         #result.show {
             opacity: 1;
@@ -85,6 +108,7 @@
             </div>
             <button type="button" id="addStock">Add Stock</button>
             <button type="submit">Optimize</button>
+            <button type="button" id="resetForm">Reset</button>
         </form>
     </div>
     <div id="result"></div>
@@ -127,16 +151,26 @@
                 }
                 let resultHTML = `<h2>Optimization Results:</h2>`;
                 resultHTML += `<p>Expected Return: ${(data.return * 100).toFixed(2)}%</p>`;
-                resultHTML += `<p>Expected Risk: ${(data.risk * 100).toFixed(2)}%</p>`;
+                resultHTML += `<p>Risk: ${(data.risk * 100).toFixed(2)}%</p>`;
                 resultHTML += `<h3>Optimal Ratios:</h3>`;
                 for (const [stock, ratio] of Object.entries(data.ratios)) {
-                    resultHTML += `<p>${stock}: ${(ratio * 100).toFixed(2)}%</p>`;
+                    resultHTML += `<p>${stock}: ${(ratio * 100).toFixed(1)}%</p>`;
                 }
                 document.getElementById('result').innerHTML = resultHTML;
                 document.getElementById('result').classList.add('show');
             } catch (error) {
                 console.error('Error:', error);
             }
+        });
+        document.getElementById('resetForm').addEventListener('click', () => {
+            document.getElementById('stockInputs').innerHTML = `
+                <div class="stock-input">
+                    <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
+                    <button type="button" class="removeStock">-</button>
+                </div>`;
+            stockCount = 1;
+            document.getElementById('result').classList.remove('show');
+            document.getElementById('result').innerHTML = '';
         });
     </script>
 </body>
