@@ -5,16 +5,25 @@ import pandas as pd
 from scipy.optimize import minimize
 import datetime
 from datetime import datetime, timedelta
-import json  # Import json module for output
+import json
+
+import yfinance as yf
 
 def fetch_stock_data(symbols, start_date, end_date):
     data = {}
     for symbol in symbols:
-        stock_data = yf.download(symbol, start=start_date, end=end_date)
+        if "." in symbol and not symbol.endswith((".NS", ".BO")):
+            yf_symbol = symbol.replace('.', '-')
+        else:
+            yf_symbol = symbol
+
+        stock_data = yf.download(yf_symbol, start=start_date, end=end_date)
+
         if 'Close' in stock_data.columns:
             data[symbol] = stock_data['Close'].dropna().values.tolist()
         else:
-            data[symbol] = []
+            data[symbol] = []  
+
     return data
 
 def calculate_daily_returns(data):
@@ -41,11 +50,26 @@ def calculate_statistics(daily_returns):
 def portfolio_variance(weights, covariance_matrix):
     return np.dot(weights.T, np.dot(covariance_matrix, weights))
 
+def portfolio_variance(weights, covariance_matrix, correlation_matrix):
+    weights_sds = weights * std_devs
+    m1 = np.dot(weights_sds, correlation_matrix)
+    m2 = np.dot(m1, weights_sds.T)
+    portfolio_variance_value = np.sqrt(m2)
+    expected_yearly_returns = mean_returns * 252
+    eyr_by_weight = weights * expected_yearly_returns
+    expected_portfolio_return = np.sum(eyr_by_weight)
+    annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
+    # if annual_portfolio_variance > 13:
+    #     return annual_portfolio_variance
+    # else:
+    #     return 100
+    return annual_portfolio_variance
+
 def optimize_portfolio(covariance_matrix, num_stocks):
     init_weights = np.array([1.0 / num_stocks] * num_stocks)
     constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
     bounds = [(0, 1) for _ in range(num_stocks)]
-    result = minimize(portfolio_variance, init_weights, args=(covariance_matrix,),
+    result = minimize(portfolio_variance, init_weights, args=(covariance_matrix, correlation_matrix),
                       method='SLSQP', bounds=bounds, constraints=constraints)
     return result.x
 
@@ -72,14 +96,14 @@ if __name__ == "__main__":
 
     optimized_weights = optimize_portfolio(covariance_matrix, num_stocks)
 
-    # weights_sds = optimized_weights * std_devs
-    # m1 = np.dot(weights_sds, correlation_matrix)
-    # m2 = np.dot(m1, weights_sds.T)
-    # portfolio_variance_value = np.sqrt(m2)
-    # expected_yearly_returns = mean_returns * 252
-    # eyr_by_weight = optimized_weights * expected_yearly_returns
-    # expected_portfolio_return = np.sum(eyr_by_weight)
-    # annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
+    weights_sds = optimized_weights * std_devs
+    m1 = np.dot(weights_sds, correlation_matrix)
+    m2 = np.dot(m1, weights_sds.T)
+    portfolio_variance_value = np.sqrt(m2)
+    expected_yearly_returns = mean_returns * 252
+    eyr_by_weight = optimized_weights * expected_yearly_returns
+    expected_portfolio_return = np.sum(eyr_by_weight)
+    annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
 
     results = {
         'optimized_weights': optimized_weights.tolist(),
