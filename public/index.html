@@ -107,13 +107,22 @@
                 </div>
             </div>
             <button type="button" id="addStock">Add Stock</button>
-            <button type="submit">Optimize</button>
+            <button type="button" id="analyzeRisk">Analyze Risk</button>
+        
+            <div id="riskSelection" style="display:none; margin-top: 15px;">
+                <label for="userValue">Choose a risk threshold between <span id="rangeText"></span>:</label>
+                <input type="number" id="userValue" step="0.01" required style="margin-top: 5px; width: 100%;">
+                <button type="submit" style="margin-top: 10px;">Run Optimization</button>
+            </div>
+        
             <button type="button" id="resetForm">Reset</button>
         </form>
     </div>
     <div id="result"></div>
     <script>
         let stockCount = 1;
+        let minValue = null, maxValue = null;
+    
         document.getElementById('addStock').addEventListener('click', () => {
             if (stockCount >= 10) return;
             const newInput = document.createElement('div');
@@ -125,6 +134,7 @@
             document.getElementById('stockInputs').appendChild(newInput);
             stockCount++;
         });
+    
         document.getElementById('stockInputs').addEventListener('click', (e) => {
             if (e.target.classList.contains('removeStock')) {
                 if (stockCount > 1) {
@@ -133,22 +143,59 @@
                 }
             }
         });
-        document.getElementById('optimizeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+    
+        document.getElementById('analyzeRisk').addEventListener('click', async () => {
             const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
-                            .map(input => input.value.trim())
-                            .filter(Boolean);
+                                .map(input => input.value.trim())
+                                .filter(Boolean);
+            if (stocks.length === 0) return alert('Please enter at least one stock');
+    
             try {
-                const response = await fetch('/optimize', {
+                const response = await fetch('/risk-analysis', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stocks })
                 });
                 const data = await response.json();
                 if (data.error) {
+                    return alert(`Risk analysis failed: ${data.error}`);
+                }
+                minValue = data.minRisk;
+                maxValue = data.maxRisk;
+                document.getElementById('rangeText').textContent = `${minValue.toFixed(2)} and ${maxValue.toFixed(2)}`;
+                document.getElementById('userValue').value = '';
+                document.getElementById('riskSelection').style.display = 'block';
+            } catch (err) {
+                alert('Risk analysis failed. Check console.');
+                console.error(err);
+            }
+        });
+    
+        document.getElementById('optimizeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+    
+            const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
+                                .map(input => input.value.trim())
+                                .filter(Boolean);
+    
+            const userValue = parseFloat(document.getElementById('userValue').value);
+            if (isNaN(userValue) || userValue < minValue || userValue > maxValue) {
+                return alert(`Please choose a valid value between ${minValue} and ${maxValue}`);
+            }
+    
+            try {
+                const response = await fetch('/optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stocks, userValue })
+                });
+    
+                const data = await response.json();
+                if (data.error) {
                     document.getElementById('result').innerHTML = `<p>Error: ${data.error}</p>`;
                     return;
                 }
+    
                 let resultHTML = `<h2>Optimization Results:</h2>`;
                 resultHTML += `<p>Expected Return: ${(data.return * 100).toFixed(2)}%</p>`;
                 resultHTML += `<p>Risk: ${(data.risk * 100).toFixed(2)}%</p>`;
@@ -156,12 +203,14 @@
                 for (const [stock, ratio] of Object.entries(data.ratios)) {
                     resultHTML += `<p>${stock}: ${(ratio * 100).toFixed(1)}%</p>`;
                 }
+    
                 document.getElementById('result').innerHTML = resultHTML;
                 document.getElementById('result').classList.add('show');
             } catch (error) {
                 console.error('Error:', error);
             }
         });
+    
         document.getElementById('resetForm').addEventListener('click', () => {
             document.getElementById('stockInputs').innerHTML = `
                 <div class="stock-input">
@@ -171,6 +220,9 @@
             stockCount = 1;
             document.getElementById('result').classList.remove('show');
             document.getElementById('result').innerHTML = '';
+            document.getElementById('riskSelection').style.display = 'none';
+            minValue = null;
+            maxValue = null;
         });
     </script>
 </body>

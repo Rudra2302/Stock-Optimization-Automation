@@ -7,9 +7,10 @@ const port = 3000;
 app.use(express.static('public'));
 app.use(express.json());
 
-app.post('/optimize', (req, res) => {
+// Step 1: Risk Analysis
+app.post('/risk-analysis', (req, res) => {
     const stocks = req.body.stocks;
-    
+
     if (!stocks || !Array.isArray(stocks)) {
         return res.status(400).json({ error: 'Invalid stock format' });
     }
@@ -17,26 +18,71 @@ app.post('/optimize', (req, res) => {
     const numStocks = stocks.length;
     const stockSymbols = stocks.join(',');
 
-    const pythonProcess = spawn('python', [
-        'Optimization_Logic.py',
+    const riskProcess = spawn('python', [
+        'Risk_Analysis.py',
         numStocks.toString(),
         stockSymbols
     ]);
 
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(`Python error: ${data}`);
+    riskProcess.stderr.on('data', (data) => {
+        console.error(`Risk Analysis error: ${data}`);
     });
 
-    pythonProcess.on('close', (code) => {
+    riskProcess.on('close', (code) => {
+        if (code !== 0) {
+            return res.status(500).json({ error: 'Risk analysis failed' });
+        }
+
+        fs.readFile('analysis.txt', 'utf8', (err, data) => {
+            if (err) {
+                return res.status(500).json({ error: 'Analysis results not found' });
+            }
+
+            try {
+                const riskData = JSON.parse(data); // Parse as JSON
+                res.json({
+                    minRisk: riskData.minRisk,
+                    maxRisk: riskData.maxRisk
+                });
+            } catch (e) {
+                res.status(500).json({ error: 'Invalid JSON format in analysis' });
+            }
+        });
+    });
+});
+
+// Step 2: Optimization with user-selected risk
+app.post('/optimize', (req, res) => {
+    const { stocks, userValue } = req.body;
+
+    if (!stocks || !Array.isArray(stocks)) {
+        return res.status(400).json({ error: 'Invalid input format' });
+    }
+
+    const numStocks = stocks.length;
+    const stockSymbols = stocks.join(',');
+
+    const optimizeProcess = spawn('python', [
+        'Optimization_Logic.py',
+        numStocks.toString(),
+        stockSymbols,
+        userValue.toString()
+    ]);
+
+    optimizeProcess.stderr.on('data', (data) => {
+        console.error(`Optimization error: ${data}`);
+    });
+
+    optimizeProcess.on('close', (code) => {
         if (code !== 0) {
             return res.status(500).json({ error: 'Optimization failed' });
         }
-        
+
         fs.readFile('results.txt', 'utf8', (err, data) => {
             if (err) {
                 return res.status(500).json({ error: 'Results not found' });
             }
-            
+
             try {
                 const result = JSON.parse(data);
                 const response = {
@@ -45,7 +91,6 @@ app.post('/optimize', (req, res) => {
                     risk: result.annual_portfolio_variance
                 };
 
-                // Map weights to stock symbols
                 stocks.forEach((stock, index) => {
                     response.ratios[stock] = result.optimized_weights[index];
                 });
