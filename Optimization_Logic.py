@@ -66,7 +66,38 @@ def portfolio_variance_maximization(weights, correlation_matrix):
     annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
     return -annual_portfolio_variance
 
-def optimize_portfolio(covariance_matrix, num_stocks, threshold):
+def portfolio_return_minimization(weights, mean_returns, threshold):
+    expected_yearly_returns = mean_returns * 252
+    eyr_by_weight = weights * expected_yearly_returns
+    expected_portfolio_return = np.sum(eyr_by_weight)
+    if expected_portfolio_return >= threshold:
+        return expected_portfolio_return
+    else:
+        return 100
+
+def portfolio_return_maximization(weights, mean_returns):
+    expected_yearly_returns = mean_returns * 252
+    eyr_by_weight = weights * expected_yearly_returns
+    expected_portfolio_return = np.sum(eyr_by_weight)
+    return -expected_portfolio_return
+
+def portfolio_return_risk_minimization(weights, correlation_matrix, mean_returns):
+    weights_sds = weights * std_devs
+    m1 = np.dot(weights_sds, correlation_matrix)
+    m2 = np.dot(m1, weights_sds.T)
+    portfolio_variance_value = np.sqrt(m2)
+    annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
+
+    expected_yearly_returns = mean_returns * 252
+    eyr_by_weight = weights * expected_yearly_returns
+    expected_portfolio_return = np.sum(eyr_by_weight)
+
+    if annual_portfolio_variance == 0:
+        annual_portfolio_variance = 0.0001
+
+    return (-1)*expected_portfolio_return/annual_portfolio_variance
+
+def optimize_portfolio_risk(correlation_matrix, num_stocks, threshold):
     init_weights = np.array([1.0 / num_stocks] * num_stocks)
     constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
     bounds = [(0, 1) for _ in range(num_stocks)]
@@ -87,10 +118,39 @@ def optimize_portfolio(covariance_matrix, num_stocks, threshold):
                       method='SLSQP', bounds=bounds, constraints=constraints)
     return result.x
 
+def optimize_portfolio_return(mean_returns, num_stocks, threshold):
+    init_weights = np.array([1.0 / num_stocks] * num_stocks)
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = [(0, 1) for _ in range(num_stocks)]
+
+    init_expected_yearly_returns = mean_returns * 252
+    init_eyr_by_weight = init_weights * init_expected_yearly_returns
+    init_expected_portfolio_return = np.sum(init_eyr_by_weight)
+
+    if init_expected_portfolio_return >= threshold:
+        result = minimize(portfolio_return_minimization, init_weights, args=(mean_returns, threshold),
+                      method='SLSQP', bounds=bounds, constraints=constraints)
+    else:
+        result = minimize(portfolio_return_maximization, init_weights, args=(mean_returns),
+                      method='SLSQP', bounds=bounds, constraints=constraints)
+        result = minimize(portfolio_return_minimization, result.x, args=(mean_returns, threshold),
+                      method='SLSQP', bounds=bounds, constraints=constraints)
+    return result.x
+
+def optimize_portfolio_return_risk(correlation_matrix, mean_returns, num_stocks):
+    init_weights = np.array([1.0 / num_stocks] * num_stocks)
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = [(0, 1) for _ in range(num_stocks)]
+
+    result = minimize(portfolio_return_risk_minimization, init_weights, args=(correlation_matrix, mean_returns),
+                      method='SLSQP', bounds=bounds, constraints=constraints)
+    return result.x
+
 if __name__ == "__main__":
     num_stocks = int(sys.argv[1])
     stock_symbols = sys.argv[2].split(',')
     threshold = int(sys.argv[3])
+    type = sys.argv[4]
 
     end_date = datetime.today().strftime('%Y-%m-%d')
     start_date = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
@@ -99,7 +159,12 @@ if __name__ == "__main__":
     daily_returns = calculate_daily_returns(stock_data)
     mean_returns, std_devs, covariance_matrix, correlation_matrix = calculate_statistics(daily_returns)
 
-    optimized_weights = optimize_portfolio(covariance_matrix, num_stocks, threshold)
+    if type == "risk":
+        optimized_weights = optimize_portfolio_risk(correlation_matrix, num_stocks, threshold)
+    elif type == "return":
+        optimized_weights = optimize_portfolio_return(mean_returns, num_stocks, threshold)
+    else:
+        optimized_weights = optimize_portfolio_return_risk(correlation_matrix, mean_returns, num_stocks)
 
     weights_sds = optimized_weights * std_devs
     m1 = np.dot(weights_sds, correlation_matrix)
@@ -109,11 +174,15 @@ if __name__ == "__main__":
     eyr_by_weight = optimized_weights * expected_yearly_returns
     expected_portfolio_return = np.sum(eyr_by_weight)
     annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
+    if annual_portfolio_variance == 0:
+        annual_portfolio_variance = 0.0001
+    expected_ratio = expected_portfolio_return / annual_portfolio_variance
 
     results = {
         'optimized_weights': optimized_weights.tolist(),
         'expected_portfolio_return': expected_portfolio_return/100,
-        'annual_portfolio_variance': annual_portfolio_variance/100
+        'annual_portfolio_variance': annual_portfolio_variance/100,
+        'expected_ratio': expected_ratio,
     }
 
     with open("results.txt", "w") as f:

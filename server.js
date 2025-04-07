@@ -42,7 +42,9 @@ app.post('/risk-analysis', (req, res) => {
                 const riskData = JSON.parse(data); // Parse as JSON
                 res.json({
                     minRisk: riskData.minRisk,
-                    maxRisk: riskData.maxRisk
+                    maxRisk: riskData.maxRisk,
+                    minReturn: riskData.minReturn,
+                    maxReturn: riskData.maxReturn,
                 });
             } catch (e) {
                 res.status(500).json({ error: 'Invalid JSON format in analysis' });
@@ -53,7 +55,7 @@ app.post('/risk-analysis', (req, res) => {
 
 // Step 2: Optimization with user-selected risk
 app.post('/optimize', (req, res) => {
-    const { stocks, userValue } = req.body;
+    let { stocks, userValue, type } = req.body;
 
     if (!stocks || !Array.isArray(stocks)) {
         return res.status(400).json({ error: 'Invalid input format' });
@@ -61,12 +63,16 @@ app.post('/optimize', (req, res) => {
 
     const numStocks = stocks.length;
     const stockSymbols = stocks.join(',');
+    if (userValue === null) {
+        userValue = 0;
+    }
 
     const optimizeProcess = spawn('python', [
         'Optimization_Logic.py',
         numStocks.toString(),
         stockSymbols,
-        userValue.toString()
+        userValue.toString(),
+        type 
     ]);
 
     optimizeProcess.stderr.on('data', (data) => {
@@ -88,7 +94,8 @@ app.post('/optimize', (req, res) => {
                 const response = {
                     ratios: {},
                     return: result.expected_portfolio_return,
-                    risk: result.annual_portfolio_variance
+                    risk: result.annual_portfolio_variance,
+                    ratio: result.expected_ratio,
                 };
 
                 stocks.forEach((stock, index) => {

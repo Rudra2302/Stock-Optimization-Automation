@@ -107,12 +107,38 @@
                 </div>
             </div>
             <button type="button" id="addStock">Add Stock</button>
-            <button type="button" id="analyzeRisk">Analyze Risk</button>
+            <div>
+                <button type="button" id="analyzeRisk">Analyze Risk</button>
+                <div id="analysisResults" style="display:none;">
+                    <h3>Risk/Reward Ranges:</h3>
+                    <p>Minimum Risk: <span id="minRisk"></span></p>
+                    <p>Maximum Risk: <span id="maxRisk"></span></p>
+                    <p>Minimum Return: <span id="minReturn"></span></p>
+                    <p>Maximum Return: <span id="maxReturn"></span></p>
+                </div>
+            </div>
         
-            <div id="riskSelection" style="display:none; margin-top: 15px;">
-                <label for="userValue">Choose a risk threshold between <span id="rangeText"></span>:</label>
-                <input type="number" id="userValue" step="0.01" required style="margin-top: 5px; width: 100%;">
-                <button type="submit" style="margin-top: 10px;">Run Optimization</button>
+            <div class="section optimization-section">
+                <h2>Portfolio Optimization</h2>
+                <!-- Buttons for selecting optimization type -->
+                <button type="button" onclick="runOptimizationRatio()">Optimize on Return to Risk Ratio</button>
+                <button type="button" onclick="showOptimizationInput('risk')">Optimize on Risk</button>
+                <button type="button" onclick="showOptimizationInput('return')">Optimize on Return</button>
+        
+                <!-- Dynamic input and button for optimization -->
+                <div id="optimizationInputContainer" class="hidden">
+                    <input type="number" id="optimizationInputField" placeholder="" required>
+                    <button type="button" id="runOptimizationButton">Run Optimization</button>
+                </div>
+            </div>
+
+            <div class="section hidden" id="resultsSection">
+                <h2>Optimization Results</h2>
+                <p>Expected Return: <span id="optimizedReturn"></span></p>
+                <p>Portfolio Risk: <span id="optimizedRisk"></span></p>
+                <p>Return to Risk Ratio: <span id="ReturnRiskRatio"></span></p>
+                <h3>Optimal Weights:</h3>
+                <ul id="optimizedWeights"></ul>
             </div>
         
             <button type="button" id="resetForm">Reset</button>
@@ -120,110 +146,196 @@
     </div>
     <div id="result"></div>
     <script>
-        let stockCount = 1;
-        let minValue = null, maxValue = null;
-    
-        document.getElementById('addStock').addEventListener('click', () => {
-            if (stockCount >= 10) return;
-            const newInput = document.createElement('div');
-            newInput.className = 'stock-input';
-            newInput.innerHTML = `
+    let stockCount = 1;
+    let minRisk = null, maxRisk = null, minReturn = null, maxReturn = null;
+    let selectedStocks = [];
+    let optimizationType = null;
+
+    document.getElementById('addStock').addEventListener('click', () => {
+        if (stockCount >= 10) return;
+        const newInput = document.createElement('div');
+        newInput.className = 'stock-input';
+        newInput.innerHTML = `
+            <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
+            <button type="button" class="removeStock">-</button>
+        `;
+        document.getElementById('stockInputs').appendChild(newInput);
+        stockCount++;
+    });
+
+    document.getElementById('stockInputs').addEventListener('click', (e) => {
+        if (e.target.classList.contains('removeStock')) {
+            if (stockCount > 1) {
+                e.target.parentElement.remove();
+                stockCount--;
+            }
+        }
+    });
+
+    document.getElementById('analyzeRisk').addEventListener('click', async () => {
+        const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
+                        .map(input => input.value.trim())
+                        .filter(Boolean);
+        if (stocks.length === 0) return alert('Please enter at least one stock');
+        selectedStocks = stocks;
+
+        try {
+            const response = await fetch('/risk-analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stocks })
+            });
+            const data = await response.json();
+            if (data.error) {
+                return alert(`Risk analysis failed: ${data.error}`);
+            }
+            
+            // Update analysis results display
+            minRisk = data.minRisk;
+            maxRisk = data.maxRisk;
+            minReturn = data.minReturn;
+            maxReturn = data.maxReturn;
+            
+            document.getElementById('minRisk').textContent = minRisk.toFixed(2);
+            document.getElementById('maxRisk').textContent = maxRisk.toFixed(2);
+            document.getElementById('minReturn').textContent = minReturn.toFixed(2);
+            document.getElementById('maxReturn').textContent = maxReturn.toFixed(2);
+            document.getElementById('analysisResults').style.display = 'block';
+
+        } catch (err) {
+            alert('Risk analysis failed. Check console.');
+            console.log(err);
+        }
+    });
+
+    function showOptimizationInput(type) {
+        optimizationType = type;
+        
+        const inputField = document.getElementById('optimizationInputField');
+        
+        if (type === 'risk') {
+            inputField.placeholder = `Enter risk (${minRisk.toFixed(2)} - ${maxRisk.toFixed(2)})`;
+        } else {
+            inputField.placeholder = `Enter return (${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)})`;
+        }
+        document.getElementById('optimizationInputContainer').classList.remove('hidden');
+    }
+
+    async function runOptimizationRatio() {
+        try {
+            const response = await fetch('/optimize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    stocks: selectedStocks,
+                    userValue: null, // Pass null or 0 as no threshold is needed
+                    type: 'ratio' // Indicate that this is for return-to-risk ratio
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                return alert(`Optimization failed: ${data.error}`);
+            }
+
+            // Display results
+            document.getElementById('optimizedReturn').textContent = `${(data.return * 100).toFixed(2)}%`;
+            document.getElementById('optimizedRisk').textContent = `${(data.risk * 100).toFixed(2)}%`;
+            document.getElementById('ReturnRiskRatio').textContent = `${(data.ratio).toFixed(2)}`;
+
+            const weightsList = document.getElementById('optimizedWeights');
+            
+            weightsList.innerHTML = Object.entries(data.ratios)
+                                        .map(([stock, weight]) => `<li>${stock}: ${(weight * 100).toFixed(1)}%</li>`)
+                                        .join('');
+            
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    function handleOptimization(type) {
+        const riskInput = document.getElementById('riskInput');
+        const returnInput = document.getElementById('returnInput');
+        
+        if(type === 'risk') {
+            riskInput.disabled = false;
+            returnInput.disabled = true;
+            riskInput.placeholder = `Enter risk (${minRisk.toFixed(2)} - ${maxRisk.toFixed(2)})`;
+            returnInput.value = '';
+            riskInput.focus(); // Auto-focus the enabled input
+        } else {
+            returnInput.disabled = false;
+            riskInput.disabled = true;
+            returnInput.placeholder = `Enter return (${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)})`;
+            riskInput.value = '';
+            returnInput.focus(); // Auto-focus the enabled input
+        }
+    }
+
+    document.getElementById('runOptimizationButton').addEventListener('click', async () => {
+        const value = parseFloat(document.getElementById('optimizationInputField').value);
+
+        const minValue = optimizationType === 'risk' ? minRisk : minReturn;
+        const maxValue = optimizationType === 'risk' ? maxRisk : maxReturn;
+
+        if (isNaN(value) || value < minValue || value > maxValue) {
+            return alert(`Please enter a valid ${optimizationType} value between ${minValue.toFixed(2)} and ${maxValue.toFixed(2)}`);
+        }
+
+        try {
+            const response = await fetch('/optimize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    stocks: selectedStocks,
+                    userValue: value,
+                    type: optimizationType
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                return alert(`Optimization failed: ${data.error}`);
+            }
+
+            // Display results
+            document.getElementById('optimizedReturn').textContent = `${(data.return * 100).toFixed(2)}%`;
+            document.getElementById('optimizedRisk').textContent = `${(data.risk * 100).toFixed(2)}%`;
+            document.getElementById('ReturnRiskRatio').textContent = `${(data.ratio).toFixed(2)}`;
+
+            const weightsList = document.getElementById('optimizedWeights');
+            
+            weightsList.innerHTML = Object.entries(data.ratios)
+                                        .map(([stock, weight]) => `<li>${stock}: ${(weight * 100).toFixed(1)}%</li>`)
+                                        .join('');
+            
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    document.getElementById('resetForm').addEventListener('click', () => {
+        document.getElementById('stockInputs').innerHTML = `
+            <div class="stock-input">
                 <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
                 <button type="button" class="removeStock">-</button>
-            `;
-            document.getElementById('stockInputs').appendChild(newInput);
-            stockCount++;
-        });
-    
-        document.getElementById('stockInputs').addEventListener('click', (e) => {
-            if (e.target.classList.contains('removeStock')) {
-                if (stockCount > 1) {
-                    e.target.parentElement.remove();
-                    stockCount--;
-                }
-            }
-        });
-    
-        document.getElementById('analyzeRisk').addEventListener('click', async () => {
-            const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
-                                .map(input => input.value.trim())
-                                .filter(Boolean);
-            if (stocks.length === 0) return alert('Please enter at least one stock');
-    
-            try {
-                const response = await fetch('/risk-analysis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stocks })
-                });
-                const data = await response.json();
-                if (data.error) {
-                    return alert(`Risk analysis failed: ${data.error}`);
-                }
-                minValue = data.minRisk;
-                maxValue = data.maxRisk;
-                document.getElementById('rangeText').textContent = `${minValue.toFixed(2)} and ${maxValue.toFixed(2)}`;
-                document.getElementById('userValue').value = '';
-                document.getElementById('riskSelection').style.display = 'block';
-            } catch (err) {
-                alert('Risk analysis failed. Check console.');
-                console.error(err);
-            }
-        });
-    
-        document.getElementById('optimizeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-    
-            const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
-                                .map(input => input.value.trim())
-                                .filter(Boolean);
-    
-            const userValue = parseFloat(document.getElementById('userValue').value);
-            if (isNaN(userValue) || userValue < minValue || userValue > maxValue) {
-                return alert(`Please choose a valid value between ${minValue} and ${maxValue}`);
-            }
-    
-            try {
-                const response = await fetch('/optimize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stocks, userValue })
-                });
-    
-                const data = await response.json();
-                if (data.error) {
-                    document.getElementById('result').innerHTML = `<p>Error: ${data.error}</p>`;
-                    return;
-                }
-    
-                let resultHTML = `<h2>Optimization Results:</h2>`;
-                resultHTML += `<p>Expected Return: ${(data.return * 100).toFixed(2)}%</p>`;
-                resultHTML += `<p>Risk: ${(data.risk * 100).toFixed(2)}%</p>`;
-                resultHTML += `<h3>Optimal Ratios:</h3>`;
-                for (const [stock, ratio] of Object.entries(data.ratios)) {
-                    resultHTML += `<p>${stock}: ${(ratio * 100).toFixed(1)}%</p>`;
-                }
-    
-                document.getElementById('result').innerHTML = resultHTML;
-                document.getElementById('result').classList.add('show');
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        });
-    
-        document.getElementById('resetForm').addEventListener('click', () => {
-            document.getElementById('stockInputs').innerHTML = `
-                <div class="stock-input">
-                    <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
-                    <button type="button" class="removeStock">-</button>
-                </div>`;
-            stockCount = 1;
-            document.getElementById('result').classList.remove('show');
-            document.getElementById('result').innerHTML = '';
-            document.getElementById('riskSelection').style.display = 'none';
-            minValue = null;
-            maxValue = null;
-        });
+            </div>`;
+        stockCount = 1;
+        document.getElementById('result').classList.remove('show');
+        document.getElementById('result').innerHTML = '';
+        document.getElementById('analysisResults').style.display = 'none';
+        minRisk = null;
+        maxRisk = null;
+        minReturn = null;
+        maxReturn = null;
+    });
     </script>
 </body>
 </html>
