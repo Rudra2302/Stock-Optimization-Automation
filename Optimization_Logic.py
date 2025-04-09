@@ -146,6 +146,37 @@ def optimize_portfolio_return_risk(correlation_matrix, mean_returns, num_stocks)
                       method='SLSQP', bounds=bounds, constraints=constraints)
     return result.x
 
+def chart_data():
+    return_array = []
+    risk_array = []
+    ratio_array = []
+    for i in range(10):
+        end_date = (datetime.today() - i*timedelta(days=365)).strftime('%Y-%m-%d')
+        start_date = (datetime.today() - (i+1)*timedelta(days=365)).strftime('%Y-%m-%d')
+        stock_data = fetch_stock_data(stock_symbols, start_date, end_date)
+        daily_returns = calculate_daily_returns(stock_data)
+        mean_returns, std_devs, covariance_matrix, correlation_matrix = calculate_statistics(daily_returns)
+
+        optimized_weights = optimize_portfolio_risk(correlation_matrix, num_stocks, -1e6)
+
+        weights_sds = optimized_weights * std_devs
+        m1 = np.dot(weights_sds, correlation_matrix)
+        m2 = np.dot(m1, weights_sds.T)
+        portfolio_variance_value = np.sqrt(m2)
+        expected_yearly_returns = mean_returns * 252
+        eyr_by_weight = optimized_weights * expected_yearly_returns
+        expected_portfolio_return = np.sum(eyr_by_weight)
+        annual_portfolio_variance = portfolio_variance_value * np.sqrt(252)
+        if annual_portfolio_variance == 0:
+            annual_portfolio_variance = 0.0001
+        expected_ratio = expected_portfolio_return / annual_portfolio_variance
+
+        return_array.append(expected_portfolio_return/100)
+        risk_array.append(annual_portfolio_variance/100)
+        ratio_array.append(expected_ratio)
+    return return_array, risk_array, ratio_array
+
+
 if __name__ == "__main__":
     num_stocks = int(sys.argv[1])
     stock_symbols = sys.argv[2].split(',')
@@ -184,6 +215,20 @@ if __name__ == "__main__":
         'annual_portfolio_variance': annual_portfolio_variance/100,
         'expected_ratio': expected_ratio,
     }
+
+    return_array, risk_array, ratio_array = chart_data()
+    chart_data_results = {
+        'return': return_array,
+        'risk': risk_array,
+        'ratio': ratio_array,
+    }
+
+    current_year = datetime.now().year
+    labels = [current_year - i for i in range(len(return_array))]
+    data = {"labels": labels, "return": return_array, "risk": risk_array, "ratio": ratio_array}
+
+    with open("public/chart_data.json", "w") as f:
+        f.write(json.dumps(data, indent=4))
 
     with open("results.txt", "w") as f:
         f.write(json.dumps(results, indent=4))

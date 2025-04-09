@@ -1,341 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Optimizer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            color: #fff;
-            background: url('2a7e54add6b3524b650a6ba4f7fb01e1.jpg') no-repeat center center/cover;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        .container {
-            width: 90%;
-            max-width: 600px;
-            background: rgba(30, 30, 30, 0.85);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            text-align: left;
-        }
-        h1 {
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-align: center;
-        }
-        input[type="text"] {
-            width: calc(100% - 50px);
-            padding: 12px;
-            margin: 5px 0;
-            border: none;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            font-size: 16px;
-            display: inline-block;
-        }
-        .stock-input {
-            display: flex;
-            align-items: center;
-        }
-        .removeStock {
-            background: #d63031;
-            border: none;
-            color: white;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        .removeStock:hover {
-            background: #b22222;
-        }
-        button {
-            background: #00b894;
-            border: none;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        button:hover {
-            background: #019374;
-            transform: scale(1.08);
-        }
-        #result {
-            margin-top: 20px;
-            background: rgba(34, 34, 34, 0.85);
-            padding: 20px;
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-            width: 100%;
-            max-width: none;
-            text-align: center;
-        }
-        #result.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Optimizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding-top: 80px;
+      color: #fffffffa;
+      background: url('2a7e54add6b3524b650a6ba4f7fb01e1.jpg') no-repeat center center/cover;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h1 {
+      position: fixed;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 28px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px 0;
+      margin: 0;
+    }
+    .container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      width: 90%;
+      max-width: 1200px;
+      background: rgba(30, 30, 30, 0.05);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(241, 212, 212, 0.05);
+      backdrop-filter: blur(10px);
+      height: 80vh;
+      overflow-y: auto;
+      margin: auto;
+    }
+    .left-panel, .right-panel {
+      flex: 1;
+    }
+    h2, h3 {
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 14px;
+    }
+    .stock-input {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .removeStock {
+      background: #d65130;
+      border: none;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .removeStock:hover {
+      background: #b22222;
+    }
+    #addStock {
+      background: #e74c3c;
+      font-size: 14px;
+      padding: 8px 14px;
+      width: auto;
+      margin-top: 10px;
+      display: inline-block;
+    }
+    #addStock:hover {
+      background: #c0392b;
+    }
+    button {
+      background: #4f8dc4;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background: #59c7e9;
+      transform: scale(1.05);
+    }
+    .section {
+      margin-top: 20px;
+      background: rgba(34, 34, 34, 0.85);
+      padding: 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(5px);
+    }
+    .hidden {
+      display: none;
+    }
+    ul#optimizedWeights {
+      padding-left: 20px;
+    }
+    .section h3 {
+      margin-top: 10px;
+    }
+    .inline-form {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .inline-form input {
+      width: 150px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Stock Portfolio Optimizer</h1>
-    <div class="container">
-        <form id="optimizeForm">
-            <div id="stockInputs">
-                <div class="stock-input">
-                    <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
-                    <button type="button" class="removeStock">-</button>
-                </div>
-            </div>
-            <button type="button" id="addStock">Add Stock</button>
-            <div>
-                <button type="button" id="analyzeRisk">Analyze Risk</button>
-                <div id="analysisResults" style="display:none;">
-                    <h3>Risk/Reward Ranges:</h3>
-                    <p>Minimum Risk: <span id="minRisk"></span></p>
-                    <p>Maximum Risk: <span id="maxRisk"></span></p>
-                    <p>Minimum Return: <span id="minReturn"></span></p>
-                    <p>Maximum Return: <span id="maxReturn"></span></p>
-                </div>
-            </div>
-        
-            <div class="section optimization-section">
-                <h2>Portfolio Optimization</h2>
-                <!-- Buttons for selecting optimization type -->
-                <button type="button" onclick="runOptimizationRatio()">Optimize on Return to Risk Ratio</button>
-                <button type="button" onclick="showOptimizationInput('risk')">Optimize on Risk</button>
-                <button type="button" onclick="showOptimizationInput('return')">Optimize on Return</button>
-        
-                <!-- Dynamic input and button for optimization -->
-                <div id="optimizationInputContainer" class="hidden">
-                    <input type="number" id="optimizationInputField" placeholder="" required>
-                    <button type="button" id="runOptimizationButton">Run Optimization</button>
-                </div>
-            </div>
+  <h1>Stock Portfolio Optimizer</h1>
+  <div class="container">
+    <div class="left-panel">
+      <form id="optimizeForm">
+        <div id="stockInputs">
+          <div class="stock-input">
+            <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
+            <button type="button" class="removeStock">-</button>
+          </div>
+        </div>
+        <button type="button" id="addStock">+ Add Stock</button>
 
-            <div class="section hidden" id="resultsSection">
-                <h2>Optimization Results</h2>
-                <p>Expected Return: <span id="optimizedReturn"></span></p>
-                <p>Portfolio Risk: <span id="optimizedRisk"></span></p>
-                <p>Return to Risk Ratio: <span id="ReturnRiskRatio"></span></p>
-                <h3>Optimal Weights:</h3>
-                <ul id="optimizedWeights"></ul>
-            </div>
-        
-            <button type="button" id="resetForm">Reset</button>
-        </form>
+        <div>
+          <button type="button" id="analyzeRisk">Analyze Risk</button>
+        </div>
+
+        <div class="section optimization-section">
+          <h2>Portfolio Optimization</h2>
+          <button type="button" onclick="runOptimizationRatio()">Optimize on Return to Risk Ratio</button>
+
+          <div class="inline-form">
+            <input type="number" id="riskInputField" placeholder="Enter risk" />
+            <button type="button" onclick="runOptimizationWithValue('risk')">Optimize on Risk</button>
+          </div>
+
+          <div class="inline-form">
+            <input type="number" id="returnInputField" placeholder="Enter return" />
+            <button type="button" onclick="runOptimizationWithValue('return')">Optimize on Return</button>
+          </div>
+        </div>
+
+        <button type="button" id="resetForm">Reset</button>
+      </form>
     </div>
-    <div id="result"></div>
-    <script>
+
+    <div class="right-panel">
+      <div id="analysisResults" class="section hidden">
+        <h3>Risk/Reward Ranges:</h3>
+        <p>Minimum Risk: <span id="minRisk"></span></p>
+        <p>Maximum Risk: <span id="maxRisk"></span></p>
+        <p>Minimum Return: <span id="minReturn"></span></p>
+        <p>Maximum Return: <span id="maxReturn"></span></p>
+      </div>
+
+      <div class="section hidden" id="resultsSection">
+        <h2>Optimization Results</h2>
+        <p>Expected Return: <span id="optimizedReturn"></span></p>
+        <p>Portfolio Risk: <span id="optimizedRisk"></span></p>
+        <p>Return to Risk Ratio: <span id="ReturnRiskRatio"></span></p>
+        <h3>Optimal Weights:</h3>
+        <ul id="optimizedWeights"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
     let stockCount = 1;
     let minRisk = null, maxRisk = null, minReturn = null, maxReturn = null;
     let selectedStocks = [];
-    let optimizationType = null;
 
     document.getElementById('addStock').addEventListener('click', () => {
-        if (stockCount >= 10) return;
-        const newInput = document.createElement('div');
-        newInput.className = 'stock-input';
-        newInput.innerHTML = `
-            <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
-            <button type="button" class="removeStock">-</button>
-        `;
-        document.getElementById('stockInputs').appendChild(newInput);
-        stockCount++;
+      if (stockCount >= 10) return;
+      const newInput = document.createElement('div');
+      newInput.className = 'stock-input';
+      newInput.innerHTML = `
+        <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
+        <button type="button" class="removeStock">-</button>
+      `;
+      document.getElementById('stockInputs').appendChild(newInput);
+      stockCount++;
     });
 
     document.getElementById('stockInputs').addEventListener('click', (e) => {
-        if (e.target.classList.contains('removeStock')) {
-            if (stockCount > 1) {
-                e.target.parentElement.remove();
-                stockCount--;
-            }
+      if (e.target.classList.contains('removeStock')) {
+        if (stockCount > 1) {
+          e.target.parentElement.remove();
+          stockCount--;
         }
+      }
     });
 
     document.getElementById('analyzeRisk').addEventListener('click', async () => {
-        const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
-                        .map(input => input.value.trim())
-                        .filter(Boolean);
-        if (stocks.length === 0) return alert('Please enter at least one stock');
-        selectedStocks = stocks;
+      const stocks = Array.from(document.querySelectorAll('[name="stock"]'))
+        .map(input => input.value.trim())
+        .filter(Boolean);
+      if (stocks.length === 0) return alert('Please enter at least one stock');
+      selectedStocks = stocks;
 
-        try {
-            const response = await fetch('/risk-analysis', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stocks })
-            });
-            const data = await response.json();
-            if (data.error) {
-                return alert(`Risk analysis failed: ${data.error}`);
-            }
-            
-            // Update analysis results display
-            minRisk = data.minRisk;
-            maxRisk = data.maxRisk;
-            minReturn = data.minReturn;
-            maxReturn = data.maxReturn;
-            
-            document.getElementById('minRisk').textContent = minRisk.toFixed(2);
-            document.getElementById('maxRisk').textContent = maxRisk.toFixed(2);
-            document.getElementById('minReturn').textContent = minReturn.toFixed(2);
-            document.getElementById('maxReturn').textContent = maxReturn.toFixed(2);
-            document.getElementById('analysisResults').style.display = 'block';
+      try {
+        const response = await fetch('/risk-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stocks })
+        });
+        const data = await response.json();
+        if (data.error) return alert(`Risk analysis failed: ${data.error}`);
 
-        } catch (err) {
-            alert('Risk analysis failed. Check console.');
-            console.log(err);
-        }
+        minRisk = data.minRisk;
+        maxRisk = data.maxRisk;
+        minReturn = data.minReturn;
+        maxReturn = data.maxReturn;
+
+        document.getElementById('minRisk').textContent = minRisk.toFixed(2);
+        document.getElementById('maxRisk').textContent = maxRisk.toFixed(2);
+        document.getElementById('minReturn').textContent = minReturn.toFixed(2);
+        document.getElementById('maxReturn').textContent = maxReturn.toFixed(2);
+        document.getElementById('analysisResults').classList.remove('hidden');
+
+        document.getElementById('riskInputField').placeholder = `Enter risk (${minRisk.toFixed(2)} - ${maxRisk.toFixed(2)})`;
+        document.getElementById('returnInputField').placeholder = `Enter return (${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)})`;
+
+      } catch (err) {
+        alert('Risk analysis failed. Check console.');
+        console.error(err);
+      }
     });
-
-    function showOptimizationInput(type) {
-        optimizationType = type;
-        
-        const inputField = document.getElementById('optimizationInputField');
-        
-        if (type === 'risk') {
-            inputField.placeholder = `Enter risk (${minRisk.toFixed(2)} - ${maxRisk.toFixed(2)})`;
-        } else {
-            inputField.placeholder = `Enter return (${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)})`;
-        }
-        document.getElementById('optimizationInputContainer').classList.remove('hidden');
-    }
 
     async function runOptimizationRatio() {
-        try {
-            const response = await fetch('/optimize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    stocks: selectedStocks,
-                    userValue: null, // Pass null or 0 as no threshold is needed
-                    type: 'ratio' // Indicate that this is for return-to-risk ratio
-                })
-            });
+      try {
+        const response = await fetch('/optimize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stocks: selectedStocks,
+            userValue: null,
+            type: 'ratio'
+          })
+        });
 
-            const data = await response.json();
-
-            if (data.error) {
-                return alert(`Optimization failed: ${data.error}`);
-            }
-
-            // Display results
-            document.getElementById('optimizedReturn').textContent = `${(data.return * 100).toFixed(2)}%`;
-            document.getElementById('optimizedRisk').textContent = `${(data.risk * 100).toFixed(2)}%`;
-            document.getElementById('ReturnRiskRatio').textContent = `${(data.ratio).toFixed(2)}`;
-
-            const weightsList = document.getElementById('optimizedWeights');
-            
-            weightsList.innerHTML = Object.entries(data.ratios)
-                                        .map(([stock, weight]) => `<li>${stock}: ${(weight * 100).toFixed(1)}%</li>`)
-                                        .join('');
-            
-            document.getElementById('resultsSection').classList.remove('hidden');
-
-        } catch (error) {
-            console.error(error);
-        }
+        const data = await response.json();
+        if (data.error) return alert(`Optimization failed: ${data.error}`);
+        displayResults(data);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
-    function handleOptimization(type) {
-        const riskInput = document.getElementById('riskInput');
-        const returnInput = document.getElementById('returnInput');
-        
-        if(type === 'risk') {
-            riskInput.disabled = false;
-            returnInput.disabled = true;
-            riskInput.placeholder = `Enter risk (${minRisk.toFixed(2)} - ${maxRisk.toFixed(2)})`;
-            returnInput.value = '';
-            riskInput.focus(); // Auto-focus the enabled input
-        } else {
-            returnInput.disabled = false;
-            riskInput.disabled = true;
-            returnInput.placeholder = `Enter return (${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)})`;
-            riskInput.value = '';
-            returnInput.focus(); // Auto-focus the enabled input
-        }
+    async function runOptimizationWithValue(type) {
+      const inputId = type === 'risk' ? 'riskInputField' : 'returnInputField';
+      const value = parseFloat(document.getElementById(inputId).value);
+      const minValue = type === 'risk' ? minRisk : minReturn;
+      const maxValue = type === 'risk' ? maxRisk : maxReturn;
+
+      if (isNaN(value) || value < minValue || value > maxValue) {
+        return alert(`Please enter a valid ${type} value between ${minValue.toFixed(2)} and ${maxValue.toFixed(2)}`);
+      }
+
+      try {
+        const response = await fetch('/optimize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stocks: selectedStocks,
+            userValue: value,
+            type: type
+          })
+        });
+
+        const data = await response.json();
+        if (data.error) return alert(`Optimization failed: ${data.error}`);
+        displayResults(data);
+      } catch (err) {
+        console.error(err);
+      }
     }
 
-    document.getElementById('runOptimizationButton').addEventListener('click', async () => {
-        const value = parseFloat(document.getElementById('optimizationInputField').value);
-
-        const minValue = optimizationType === 'risk' ? minRisk : minReturn;
-        const maxValue = optimizationType === 'risk' ? maxRisk : maxReturn;
-
-        if (isNaN(value) || value < minValue || value > maxValue) {
-            return alert(`Please enter a valid ${optimizationType} value between ${minValue.toFixed(2)} and ${maxValue.toFixed(2)}`);
-        }
-
-        try {
-            const response = await fetch('/optimize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    stocks: selectedStocks,
-                    userValue: value,
-                    type: optimizationType
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.error) {
-                return alert(`Optimization failed: ${data.error}`);
-            }
-
-            // Display results
-            document.getElementById('optimizedReturn').textContent = `${(data.return * 100).toFixed(2)}%`;
-            document.getElementById('optimizedRisk').textContent = `${(data.risk * 100).toFixed(2)}%`;
-            document.getElementById('ReturnRiskRatio').textContent = `${(data.ratio).toFixed(2)}`;
-
-            const weightsList = document.getElementById('optimizedWeights');
-            
-            weightsList.innerHTML = Object.entries(data.ratios)
-                                        .map(([stock, weight]) => `<li>${stock}: ${(weight * 100).toFixed(1)}%</li>`)
-                                        .join('');
-            
-            document.getElementById('resultsSection').classList.remove('hidden');
-
-        } catch (error) {
-            console.error(error);
-        }
-    });
+    function displayResults(data) {
+      document.getElementById('optimizedReturn').textContent = `${(data.return * 100).toFixed(2)}%`;
+      document.getElementById('optimizedRisk').textContent = `${(data.risk * 100).toFixed(2)}%`;
+      document.getElementById('ReturnRiskRatio').textContent = `${data.ratio.toFixed(2)}`;
+      const weightsList = document.getElementById('optimizedWeights');
+      weightsList.innerHTML = Object.entries(data.ratios)
+        .map(([stock, weight]) => `<li>${stock}: ${(weight * 100).toFixed(1)}%</li>`)
+        .join('');
+      document.getElementById('resultsSection').classList.remove('hidden');
+    }
 
     document.getElementById('resetForm').addEventListener('click', () => {
-        document.getElementById('stockInputs').innerHTML = `
-            <div class="stock-input">
-                <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
-                <button type="button" class="removeStock">-</button>
-            </div>`;
-        stockCount = 1;
-        document.getElementById('result').classList.remove('show');
-        document.getElementById('result').innerHTML = '';
-        document.getElementById('analysisResults').style.display = 'none';
-        minRisk = null;
-        maxRisk = null;
-        minReturn = null;
-        maxReturn = null;
+      document.getElementById('optimizeForm').reset();
+      document.getElementById('optimizedWeights').innerHTML = '';
+      document.getElementById('resultsSection').classList.add('hidden');
+      document.getElementById('analysisResults').classList.add('hidden');
     });
-    </script>
+  </script>
 </body>
 </html>
