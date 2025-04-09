@@ -19,7 +19,7 @@ app.post('/risk-analysis', (req, res) => {
     const stockSymbols = stocks.join(',');
 
     const riskProcess = spawn('python', [
-        'Risk_Analysis.py',
+        'Risk_Reward_Analysis.py',
         numStocks.toString(),
         stockSymbols
     ]);
