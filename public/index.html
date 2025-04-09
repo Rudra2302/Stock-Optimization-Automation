@@ -6,26 +6,71 @@
   <title>Stock Optimizer</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Poppins', sans-serif;
-      margin: 0;
-      padding-top: 80px;
       color: #fffffffa;
       background: url('2a7e54add6b3524b650a6ba4f7fb01e1.jpg') no-repeat center center/cover;
       height: 100vh;
-      overflow: hidden;
     }
+
+    .navbar {
+      display: flex;
+      background-color: rgba(51, 51, 51, 0.85); 
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 999;
+      justify-content: flex-start; 
+      padding-left: 20px; 
+    }
+
+
+    .navbar a {
+      color: #f2f2f2;
+      padding: 14px 20px;
+      text-decoration: none;
+      text-align: center;
+      display: inline-block;             
+      transition: background-color 0.3s, color 0.3s;  
+      border-radius: 6px;                
+      font-weight: 500;                  
+    }
+
+
+    .navbar a:hover {
+  background-color: #444;
+  color: #fff;            
+}
+
+
     h1 {
       position: fixed;
-      top: 20px;
+      top: 50px;
       width: 100%;
       text-align: center;
       font-size: 28px;
-      z-index: 1000;
+      z-index: 998;
       background: rgba(0, 0, 0, 0.5);
       padding: 10px 0;
-      margin: 0;
     }
+
+    .tab-content {
+      display: none;
+      padding-top: 140px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .active-tab {
+      display: block;
+    }
+
     .container {
       display: flex;
       flex-direction: row;
@@ -41,14 +86,17 @@
       overflow-y: auto;
       margin: auto;
     }
+
     .left-panel, .right-panel {
       flex: 1;
     }
+
     h2, h3 {
       font-weight: 600;
       letter-spacing: 1px;
       text-align: center;
     }
+
     input[type="text"], input[type="number"] {
       padding: 10px;
       margin: 5px 0;
@@ -58,11 +106,13 @@
       color: #fff;
       font-size: 14px;
     }
+
     .stock-input {
       display: flex;
       align-items: center;
       margin-bottom: 10px;
     }
+
     .removeStock {
       background: #d65130;
       border: none;
@@ -73,20 +123,22 @@
       cursor: pointer;
       margin-left: 10px;
     }
+
     .removeStock:hover {
       background: #b22222;
     }
+
     #addStock {
       background: #e74c3c;
       font-size: 14px;
       padding: 8px 14px;
-      width: auto;
       margin-top: 10px;
-      display: inline-block;
     }
+
     #addStock:hover {
       background: #c0392b;
     }
+
     button {
       background: #4f8dc4;
       border: none;
@@ -98,10 +150,12 @@
       margin-top: 10px;
       transition: all 0.3s ease;
     }
+
     button:hover {
       background: #59c7e9;
       transform: scale(1.05);
     }
+
     .section {
       margin-top: 20px;
       background: rgba(34, 34, 34, 0.85);
@@ -109,15 +163,15 @@
       border-radius: 12px;
       backdrop-filter: blur(5px);
     }
+
     .hidden {
       display: none;
     }
+
     ul#optimizedWeights {
       padding-left: 20px;
     }
-    .section h3 {
-      margin-top: 10px;
-    }
+
     .inline-form {
       display: flex;
       align-items: center;
@@ -125,65 +179,81 @@
       margin-top: 10px;
       flex-wrap: wrap;
     }
+
     .inline-form input {
       width: 150px;
     }
   </style>
 </head>
 <body>
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <a href="#" onclick="showTab('home')">Home</a>
+    <a href="#" onclick="showTab('charts')">Charts</a>
+  </div>
+
   <h1>Stock Portfolio Optimizer</h1>
-  <div class="container">
-    <div class="left-panel">
-      <form id="optimizeForm">
-        <div id="stockInputs">
-          <div class="stock-input">
-            <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
-            <button type="button" class="removeStock">-</button>
+
+  <!-- Tab Contents -->
+  <div id="home" class="tab-content active-tab">
+    <div class="container">
+      <div class="left-panel">
+        <form id="optimizeForm">
+          <div id="stockInputs">
+            <div class="stock-input">
+              <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
+              <button type="button" class="removeStock">-</button>
+            </div>
           </div>
-        </div>
-        <button type="button" id="addStock">+ Add Stock</button>
+          <button type="button" id="addStock">+ Add Stock</button>
 
-        <div>
-          <button type="button" id="analyzeRisk">Analyze Risk</button>
-        </div>
-
-        <div class="section optimization-section">
-          <h2>Portfolio Optimization</h2>
-          <button type="button" onclick="runOptimizationRatio()">Optimize on Return to Risk Ratio</button>
-
-          <div class="inline-form">
-            <input type="number" id="riskInputField" placeholder="Enter risk" />
-            <button type="button" onclick="runOptimizationWithValue('risk')">Optimize on Risk</button>
+          <div>
+            <button type="button" id="analyzeRisk">Analyze Risk</button>
           </div>
 
-          <div class="inline-form">
-            <input type="number" id="returnInputField" placeholder="Enter return" />
-            <button type="button" onclick="runOptimizationWithValue('return')">Optimize on Return</button>
+          <div class="section optimization-section">
+            <h2>Portfolio Optimization</h2>
+            <button type="button" onclick="runOptimizationRatio()">Optimize on Return to Risk Ratio</button>
+
+            <div class="inline-form">
+              <input type="number" id="riskInputField" placeholder="Enter risk" />
+              <button type="button" onclick="runOptimizationWithValue('risk')">Optimize on Risk</button>
+            </div>
+
+            <div class="inline-form">
+              <input type="number" id="returnInputField" placeholder="Enter return" />
+              <button type="button" onclick="runOptimizationWithValue('return')">Optimize on Return</button>
+            </div>
           </div>
-        </div>
 
-        <button type="button" id="resetForm">Reset</button>
-      </form>
-    </div>
-
-    <div class="right-panel">
-      <div id="analysisResults" class="section hidden">
-        <h3>Risk/Reward Ranges:</h3>
-        <p>Minimum Risk: <span id="minRisk"></span></p>
-        <p>Maximum Risk: <span id="maxRisk"></span></p>
-        <p>Minimum Return: <span id="minReturn"></span></p>
-        <p>Maximum Return: <span id="maxReturn"></span></p>
+          <button type="button" id="resetForm">Reset</button>
+        </form>
       </div>
 
-      <div class="section hidden" id="resultsSection">
-        <h2>Optimization Results</h2>
-        <p>Expected Return: <span id="optimizedReturn"></span></p>
-        <p>Portfolio Risk: <span id="optimizedRisk"></span></p>
-        <p>Return to Risk Ratio: <span id="ReturnRiskRatio"></span></p>
-        <h3>Optimal Weights:</h3>
-        <ul id="optimizedWeights"></ul>
+      <div class="right-panel">
+        <div id="analysisResults" class="section hidden">
+          <h3>Risk/Reward Ranges:</h3>
+          <p>Minimum Risk: <span id="minRisk"></span></p>
+          <p>Maximum Risk: <span id="maxRisk"></span></p>
+          <p>Minimum Return: <span id="minReturn"></span></p>
+          <p>Maximum Return: <span id="maxReturn"></span></p>
+        </div>
+
+        <div class="section hidden" id="resultsSection">
+          <h2>Optimization Results</h2>
+          <p>Expected Return: <span id="optimizedReturn"></span></p>
+          <p>Portfolio Risk: <span id="optimizedRisk"></span></p>
+          <p>Return to Risk Ratio: <span id="ReturnRiskRatio"></span></p>
+          <h3>Optimal Weights:</h3>
+          <ul id="optimizedWeights"></ul>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div id="charts" class="tab-content">
+    <h2>Charts</h2>
+    <p>Your chart components go here.</p>
   </div>
 
   <script>
